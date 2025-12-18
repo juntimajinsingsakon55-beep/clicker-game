@@ -26,7 +26,7 @@
 </head>
 <body>
 
-    <div id="timer-container">เวลาเหลือ: <span id="time">60</span> วินาที</div>
+    <div id="timer-container">เวลาเหลือ: <span id="time">45</span> วินาที</div>
 
     <div id="score-container">
         <p class="label">แต้มของคุณ</p>
@@ -49,7 +49,7 @@
         let score = 0;
         let power = 1;
         let upgradeCost = 50;
-        let timeLeft = 60; // ตั้งเวลา 60 วินาที
+        let timeLeft = 45; // ตั้งเวลา 45 วินาที
         let timerId = null;
         let gameActive = false;
 
@@ -106,7 +106,7 @@
             score = 0;
             power = 1;
             upgradeCost = 50;
-            timeLeft = 60;
+            timeLeft = 45;
             gameActive = false;
             
             document.getElementById("time").innerText = timeLeft;
@@ -117,3 +117,4 @@
     </script>
 </body>
 </html>
+
