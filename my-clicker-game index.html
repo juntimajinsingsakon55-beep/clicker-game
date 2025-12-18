@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Clicker Mobile (Save System)</title>
+    <style>
+        /* CSS เดิมของคุณ */
+        * { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f0f3f5; font-family: sans-serif; }
+        #score-container { text-align: center; margin-bottom: 20px; }
+        #score { font-size: 60px; font-weight: bold; color: #2c3e50; margin: 0; }
+        .label { color: #7f8c8d; text-transform: uppercase; letter-spacing: 2px; }
+        #main-btn { width: 200px; height: 200px; border-radius: 50%; border: 8px solid #fff; background: linear-gradient(145deg, #3498db, #2980b9); box-shadow: 0 10px 20px rgba(0,0,0,0.1); color: white; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; cursor: pointer; }
+        #main-btn:active { transform: scale(0.9); }
+        .shop { margin-top: 40px; width: 90%; max-width: 300px; }
+        .upgrade-btn { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 10px; background-color: #2ecc71; color: white; font-size: 16px; font-weight: bold; box-shadow: 0 4px #27ae60; }
+        .upgrade-btn:disabled { background-color: #bdc3c7; box-shadow: 0 4px #95a5a6; }
+        .upgrade-btn:active { box-shadow: 0 0 #27ae60; transform: translateY(4px); }
+    </style>
+</head>
+<body>
+
+    <div id="score-container">
+        <p class="label">แต้มของคุณ</p>
+        <h1 id="score">0</h1>
+    </div>
+
+    <div id="main-btn" onclick="addScore()">กดเลย!</div>
+
+    <div class="shop">
+        <button id="up-btn" class="upgrade-btn" onclick="buyUpgrade()" disabled>
+            เพิ่มพลังคลิก (ใช้ 50 แต้ม)
+        </button>
+        <p style="text-align:center; font-size: 12px; color: #7f8c8d;">
+            ขณะนี้: 1 คลิก = <span id="per-click">1</span> แต้ม
+        </p>
+        <button onclick="resetGame()" style="width:100%; background:none; border:none; color:#e74c3c; font-size:12px; margin-top:10px; cursor:pointer;">รีเซ็ตทั้งหมด</button>
+    </div>
+
+    <script>
+        // 1. ตั้งค่าตัวแปรเริ่มต้น
+        let score = 0;
+        let power = 1;
+        let upgradeCost = 50;
+
+        // 2. ฟังก์ชันโหลดข้อมูล (จะทำงานทันทีที่เปิดหน้าเว็บ)
+        window.onload = function() {
+            const savedScore = localStorage.getItem("clicker_score");
+            const savedPower = localStorage.getItem("clicker_power");
+            const savedCost = localStorage.getItem("clicker_cost");
+
+            if (savedScore !== null) score = parseInt(savedScore);
+            if (savedPower !== null) power = parseInt(savedPower);
+            if (savedCost !== null) upgradeCost = parseInt(savedCost);
+
+            updateDisplay(); // แสดงผลแต้มที่โหลดมา
+        };
+
+        function addScore() {
+            score += power;
+            updateDisplay();
+        }
+
+        function buyUpgrade() {
+            if (score >= upgradeCost) {
+                score -= upgradeCost;
+                power += 1;
+                upgradeCost = Math.round(upgradeCost * 1.5);
+                updateDisplay();
+            }
+        }
+
+        // 3. ฟังก์ชันอัปเดตจอและบันทึกข้อมูล
+        function updateDisplay() {
+            document.getElementById("score").innerText = score;
+            document.getElementById("per-click").innerText = power;
+            
+            const upBtn = document.getElementById("up-btn");
+            upBtn.innerText = `เพิ่มพลังคลิก (ใช้ ${upgradeCost} แต้ม)`;
+            upBtn.disabled = score < upgradeCost;
+
+            // บันทึกค่าลง LocalStorage (เซฟลงเครื่องมือถือ)
+            localStorage.setItem("clicker_score", score);
+            localStorage.setItem("clicker_power", power);
+            localStorage.setItem("clicker_cost", upgradeCost);
+        }
+
+        // ฟังก์ชันล้างค่าใหม่หมด
+        function resetGame() {
+            if(confirm("คุณต้องการลบแต้มทั้งหมดใช่หรือไม่?")) {
+                localStorage.clear();
+                location.reload(); // โหลดหน้าเว็บใหม่
+            }
+        }
+    </script>
+</body>
+</html>
