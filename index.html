@@ -37,28 +37,35 @@
 
 <script>
     let score = 0, time = 0, timer;
-    // นำ URL ที่ก๊อปปี้จาก Google มาวางในเครื่องหมาย ' ' ด้านล่างนี้
     const scriptURL = 'https://script.google.com/macros/s/AKfycby21gY7Tnv6yF-_lvGwf80NLxC6LQUmHz1OCAWMKPQ3KnmVh_O2Dv9cva3Q7BFUUnqERQ/exec'; 
 
     function loadLeaderboard() {
-        fetch(scriptURL).then(r => r.json()).then(data => {
-            let html = '';
-            data.slice(0, 10).forEach((row, i) => {
-                html += `<div class="row"><span>${i+1}. ${row[0]}</span><b>${row[1]} แต้ม</b></div>`;
+        fetch(scriptURL)
+            .then(r => r.json())
+            .then(data => {
+                let html = '';
+                data.slice(0, 10).forEach((row, i) => {
+                    html += `<div class="row"><span>${i+1}. ${row[0]}</span><b>${row[1]} แต้ม</b></div>`;
+                });
+                document.getElementById('list').innerHTML = html || 'ยังไม่มีใครเล่น';
+            })
+            .catch(err => {
+                document.getElementById('list').innerHTML = 'โหลดคะแนนไม่สำเร็จ';
+                console.error(err);
             });
-            document.getElementById('list').innerHTML = html || 'ยังไม่มีใครเล่น';
-        }).catch(err => document.getElementById('list').innerHTML = 'โหลดคะแนนไม่สำเร็จ');
     }
 
     function startGame() {
-        const name = document.getElementById('playerName').value;
+        const nameInput = document.getElementById('playerName');
+        const name = nameInput.value.trim();
         if(!name) return alert('กรุณาใส่ชื่อก่อนเล่นครับ');
         
-        score = 0; time = 45;
+        score = 0; 
+        time = 45;
         document.getElementById('scoreDisplay').innerText = 0;
         document.getElementById('startBtn').disabled = true;
         document.getElementById('btn').disabled = false;
-        document.getElementById('playerName').disabled = true;
+        nameInput.disabled = true;
         
         timer = setInterval(() => {
             time--;
@@ -67,7 +74,7 @@
                 clearInterval(timer);
                 document.getElementById('btn').disabled = true;
                 document.getElementById('startBtn').disabled = false;
-                document.getElementById('playerName').disabled = false;
+                nameInput.disabled = false;
                 saveScore(name, score);
             }
         }, 1000);
@@ -79,28 +86,43 @@
     }
 
     function saveScore(name, finalScore) {
-        // ส่งข้อมูลไป Google Sheets (บันทึกทุกคน)
+        document.getElementById('list').innerHTML = 'กำลังบันทึกคะแนน...';
+        
+        // 1. ส่งข้อมูลไปบันทึกที่ Google Sheets
         fetch(scriptURL, {
             method: 'POST',
             body: JSON.stringify({ name: name, score: finalScore })
         })
-        .then(() => { 
-            // ดึงข้อมูลใหม่เพื่อมาเช็คอันดับ 
-            fetch(scriptURL).then(r => r.json()).then(data => {
-        // หาอันดับของผู้เล่นปัจจุบัน
-    let rank = data.findIndex(item => item[0] === name && item[1] === finalScore) + 1;
-    let medal = "";
-     
-    // ดีไซน์เหรียญรางวัลสำหรับ Top 5
-if (rank === 1) medal = "🥇 GOLD MEDAL!";
-else if (rank === 2) medal = "🥈 SILVER MEDAL!";
-else if (rank === 3) medal = "🥉 BRONZE MEDAL!";
-else if (rank <= 5) medal = "🏅 TOP 5!";
-else medal = "👏 ขอบคุณที่ร่วมสนุก!";
+        .then(response => response.text())
+        .then(() => {
+            // 2. เมื่อบันทึกเสร็จ ให้ดึงอันดับมาแสดงผล
+            return fetch(scriptURL);
+        })
+        .then(r => r.json())
+        .then(data => {
+            // หาอันดับ (ใช้ชื่อและคะแนนค้นหา)
+            let rank = data.findIndex(item => item[0] === name && item[1] === finalScore) + 1;
+            if (rank === 0) rank = "กำลังประมวลผล...";
 
-// แสดงป็อปอัพแบบใหม่
-alert(`จบเกม! คุณ ${name}\nทำได้ ${finalScore} แต้ม\nอันดับของคุณคือ: ${rank}\n${medal}`);
-loadLeaderboard();
-});
-});
-}
+            let medal = "👏 ขอบคุณที่ร่วมสนุก!";
+            if (rank === 1) medal = "🥇 GOLD MEDAL!";
+            else if (rank === 2) medal = "🥈 SILVER MEDAL!";
+            else if (rank === 3) medal = "🥉 BRONZE MEDAL!";
+            else if (rank <= 5) medal = "🏅 TOP 5!";
+
+            alert(`จบเกม! คุณ ${name}\nทำได้ ${finalScore} แต้ม\nอันดับของคุณคือ: ${rank}\n${medal}`);
+            loadLeaderboard();
+        })
+        .catch(err => {
+            alert('บันทึกผิดพลาด แต่คะแนนอาจจะเข้า Sheets แล้ว ลองรีเฟรชดูครับ');
+            console.error(err);
+            loadLeaderboard();
+        });
+    }
+
+    // โหลดคะแนนทันทีเมื่อเปิดหน้าเว็บ
+    loadLeaderboard();
+</script>
+</body>
+</html>
+
