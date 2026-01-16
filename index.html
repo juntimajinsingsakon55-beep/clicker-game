@@ -38,7 +38,7 @@
 <script>
     let score = 0, time = 0, timer;
     // นำ URL ที่ก๊อปปี้จาก Google มาวางในเครื่องหมาย ' ' ด้านล่างนี้
-    const scriptURL = 'ใส่_URL_ที่ก๊อปมาตรงนี้'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycby21gY7Tnv6yF-_lvGwf80NLxC6LQUmHz1OCAWMKPQ3KnmVh_O2Dv9cva3Q7BFUUnqERQ/exec'; 
 
     function loadLeaderboard() {
         fetch(scriptURL).then(r => r.json()).then(data => {
@@ -95,5 +95,6 @@
 </script>
 </body>
 </html>
+
 
 
