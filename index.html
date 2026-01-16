@@ -3,118 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Clicker - 1 Minute Challenge</title>
+    <title>Clicker Game 45s</title>
     <style>
-        * { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f0f3f5; font-family: sans-serif; }
-        
-        /* สไตล์นาฬิกาจับเวลา */
-        #timer-container { font-size: 24px; font-weight: bold; color: #e74c3c; margin-bottom: 10px; background: white; padding: 5px 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        
-        #score-container { text-align: center; margin-bottom: 20px; }
-        #score { font-size: 60px; font-weight: bold; color: #2c3e50; margin: 0; }
-        .label { color: #7f8c8d; text-transform: uppercase; letter-spacing: 2px; }
-        
-        #main-btn { width: 200px; height: 200px; border-radius: 50%; border: 8px solid #fff; background: linear-gradient(145deg, #3498db, #2980b9); box-shadow: 0 10px 20px rgba(0,0,0,0.1); color: white; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; cursor: pointer; }
-        #main-btn:active { transform: scale(0.9); }
-        #main-btn.disabled { background: #bdc3c7; cursor: default; pointer-events: none; }
-
-        .shop { margin-top: 30px; width: 90%; max-width: 300px; }
-        .upgrade-btn { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 10px; background-color: #2ecc71; color: white; font-size: 16px; font-weight: bold; box-shadow: 0 4px #27ae60; }
-        .upgrade-btn:disabled { background-color: #bdc3c7; box-shadow: 0 4px #95a5a6; }
+        body { font-family: 'Tahoma', sans-serif; text-align: center; background: #f0f4f8; margin: 0; padding: 20px; touch-action: manipulation; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 380px; margin: auto; }
+        #btn { width: 180px; height: 180px; border-radius: 50%; border: 8px solid #eee; background: #ff4757; color: white; font-size: 30px; font-weight: bold; cursor: pointer; margin: 20px 0; -webkit-tap-highlight-color: transparent; }
+        #btn:active { transform: scale(0.92); background: #ff6b81; }
+        #btn:disabled { background: #ccc; cursor: not-allowed; }
+        .score { font-size: 40px; font-weight: bold; color: #2d3436; }
+        input { padding: 12px; width: 85%; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 15px; text-align: center; }
+        .leaderboard { margin-top: 25px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 12px; height: 200px; overflow-y: auto; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .start-btn { padding: 12px 25px; background: #2ecc71; color: white; border: none; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="timer-container">เวลาเหลือ: <span id="time">45</span> วินาที</div>
+<div class="card">
+    <h2>🏆 เกมกดแข่งกัน (45 วิ)</h2>
+    <input type="text" id="playerName" placeholder="พิมพ์ชื่อของคุณที่นี่">
+    <button onclick="startGame()" id="startBtn" class="start-btn">เริ่มเล่น!</button>
+    
+    <div class="score">แต้ม: <span id="scoreDisplay">0</span></div>
+    <div id="timerDisplay" style="color: #ff4757; font-weight: bold; font-size: 20px;">เวลาเหลือ: 45</div>
+    
+    <button id="btn" onclick="hit()" disabled>กดรัวๆ!</button>
 
-    <div id="score-container">
-        <p class="label">แต้มของคุณ</p>
-        <h1 id="score">0</h1>
+    <div class="leaderboard">
+        <h4 style="text-align:center; margin:0 0 10px 0;">อันดับสูงสุด 👑</h4>
+        <div id="list">กำลังโหลดคะแนน...</div>
     </div>
+</div>
 
-    <div id="main-btn" onclick="addScore()">กดเลย!</div>
+<script>
+    let score = 0, time = 0, timer;
+    // นำ URL ที่ก๊อปปี้จาก Google มาวางในเครื่องหมาย ' ' ด้านล่างนี้
+    const scriptURL = 'ใส่_URL_ที่ก๊อปมาตรงนี้'; 
 
-    <div class="shop">
-        <button id="up-btn" class="upgrade-btn" onclick="buyUpgrade()" disabled>
-            เพิ่มพลังคลิก (ใช้ 50 แต้ม)
-        </button>
-        <p style="text-align:center; font-size: 12px; color: #7f8c8d;">
-            ขณะนี้: 1 คลิก = <span id="per-click">1</span> แต้ม
-        </p>
-        <button onclick="resetGame()" style="width:100%; background:none; border:none; color:#e74c3c; font-size:12px; margin-top:10px; cursor:pointer;">เริ่มเกมใหม่ / รีเซ็ต</button>
-    </div>
+    function loadLeaderboard() {
+        fetch(scriptURL).then(r => r.json()).then(data => {
+            let html = '';
+            data.slice(0, 10).forEach((row, i) => {
+                html += `<div class="row"><span>${i+1}. ${row[0]}</span><b>${row[1]} แต้ม</b></div>`;
+            });
+            document.getElementById('list').innerHTML = html || 'ยังไม่มีใครเล่น';
+        }).catch(err => document.getElementById('list').innerHTML = 'โหลดคะแนนไม่สำเร็จ');
+    }
 
-    <script>
-        let score = 0;
-        let power = 1;
-        let upgradeCost = 50;
-        let timeLeft = 45; // ตั้งเวลา 45 วินาที
-        let timerId = null;
-        let gameActive = false;
-
-        function startTimer() {
-            if (gameActive) return; // ถ้าเริ่มไปแล้วไม่ต้องเริ่มซ้ำ
-            gameActive = true;
-            
-            timerId = setInterval(() => {
-                timeLeft--;
-                document.getElementById("time").innerText = timeLeft;
-
-                if (timeLeft <= 0) {
-                    endGame();
-                }
-            }, 1000);
-        }
-
-        function addScore() {
-            if (timeLeft <= 0) return; // ถ้าหมดเวลาแล้วกดไม่ได้
-            if (!gameActive) startTimer(); // เริ่มจับเวลาเมื่อมีการกดครั้งแรก
-
-            score += power;
-            updateDisplay();
-        }
-
-        function endGame() {
-            clearInterval(timerId);
-            gameActive = false;
-            document.getElementById("main-btn").classList.add("disabled");
-            document.getElementById("main-btn").innerText = "หมดเวลา!";
-            alert("จบเกม! คุณทำคะแนนได้: " + score + " แต้ม");
-        }
-
-        function buyUpgrade() {
-            if (score >= upgradeCost && timeLeft > 0) {
-                score -= upgradeCost;
-                power += 1;
-                upgradeCost = Math.round(upgradeCost * 1.5);
-                updateDisplay();
+    function startGame() {
+        const name = document.getElementById('playerName').value;
+        if(!name) return alert('กรุณาใส่ชื่อก่อนเล่นครับ');
+        
+        score = 0; time = 45;
+        document.getElementById('scoreDisplay').innerText = 0;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('btn').disabled = false;
+        document.getElementById('playerName').disabled = true;
+        
+        timer = setInterval(() => {
+            time--;
+            document.getElementById('timerDisplay').innerText = 'เวลาเหลือ: ' + time;
+            if(time <= 0) {
+                clearInterval(timer);
+                document.getElementById('btn').disabled = true;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('playerName').disabled = false;
+                saveScore(name, score);
             }
-        }
+        }, 1000);
+    }
 
-        function updateDisplay() {
-            document.getElementById("score").innerText = score;
-            document.getElementById("per-click").innerText = power;
-            
-            const upBtn = document.getElementById("up-btn");
-            upBtn.innerText = `เพิ่มพลังคลิก (ใช้ ${upgradeCost} แต้ม)`;
-            upBtn.disabled = score < upgradeCost || timeLeft <= 0;
-        }
+    function hit() { 
+        score++; 
+        document.getElementById('scoreDisplay').innerText = score; 
+    }
 
-        function resetGame() {
-            clearInterval(timerId);
-            score = 0;
-            power = 1;
-            upgradeCost = 50;
-            timeLeft = 45;
-            gameActive = false;
-            
-            document.getElementById("time").innerText = timeLeft;
-            document.getElementById("main-btn").classList.remove("disabled");
-            document.getElementById("main-btn").innerText = "กดเลย!";
-            updateDisplay();
-        }
-    </script>
+    function saveScore(name, finalScore) {
+        document.getElementById('list').innerHTML = 'กำลังบันทึกคะแนน...';
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: JSON.stringify({ name: name, score: finalScore }) 
+        })
+        .then(() => { 
+            alert('จบเกม! คุณ ' + name + ' ทำได้ ' + finalScore + ' แต้ม'); 
+            loadLeaderboard(); 
+        });
+    }
+
+    // โหลดคะแนนทันทีที่เปิดหน้าเว็บ
+    loadLeaderboard();
+</script>
 </body>
 </html>
+
 
