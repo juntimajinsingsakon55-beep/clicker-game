@@ -79,22 +79,28 @@
     }
 
     function saveScore(name, finalScore) {
-        document.getElementById('list').innerHTML = 'กำลังบันทึกคะแนน...';
-        fetch(scriptURL, { 
-            method: 'POST', 
-            body: JSON.stringify({ name: name, score: finalScore }) 
+        // ส่งข้อมูลไป Google Sheets (บันทึกทุกคน)
+        fetch(scriptURL, {
+            method: 'POST',
+            body: JSON.stringify({ name: name, score: finalScore })
         })
         .then(() => { 
-            alert('จบเกม! คุณ ' + name + ' ทำได้ ' + finalScore + ' แต้ม'); 
-            loadLeaderboard(); 
-        });
-    }
+            // ดึงข้อมูลใหม่เพื่อมาเช็คอันดับ 
+            fetch(scriptURL).then(r => r.json()).then(data => {
+        // หาอันดับของผู้เล่นปัจจุบัน
+    let rank = data.findIndex(item => item[0] === name && item[1] === finalScore) + 1;
+    let medal = "";
+     
+    // ดีไซน์เหรียญรางวัลสำหรับ Top 5
+if (rank === 1) medal = "🥇 GOLD MEDAL!";
+else if (rank === 2) medal = "🥈 SILVER MEDAL!";
+else if (rank === 3) medal = "🥉 BRONZE MEDAL!";
+else if (rank <= 5) medal = "🏅 TOP 5!";
+else medal = "👏 ขอบคุณที่ร่วมสนุก!";
 
-    // โหลดคะแนนทันทีที่เปิดหน้าเว็บ
-    loadLeaderboard();
-</script>
-</body>
-</html>
-
-
-
+// แสดงป็อปอัพแบบใหม่
+alert(`จบเกม! คุณ ${name}\nทำได้ ${finalScore} แต้ม\nอันดับของคุณคือ: ${rank}\n${medal}`);
+loadLeaderboard();
+});
+});
+}
